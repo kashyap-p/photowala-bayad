@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { createClient } from "@libsql/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -9,27 +8,19 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    // No DATABASE_URL — return a stub that throws on use. The contact route
-    // checks `process.env.DATABASE_URL` first and short-circuits, so this
-    // keeps the rest of the app (static pages, assets) serving fine even
-    // before the database is wired up on Vercel.
+    // No DATABASE_URL — the contact route checks this and short-circuits
+    // with a friendly message, so this throw only fires if code bypasses
+    // that check. Keeps the app bootable without a database configured.
     throw new Error("DATABASE_URL is not set.");
   }
 
-  // Local development: file-based SQLite, standard Prisma client.
-  if (url.startsWith("file:")) {
-    return new PrismaClient({
-      log: process.env.NODE_ENV === "production" ? ["error"] : ["query"],
-    });
-  }
-
-  // Production (Turso / libSQL): route through the libSQL adapter so the
-  // same SQLite schema works over a remote connection on serverless platforms.
-  const libsql = createClient({
+  // Prisma v7 adapter takes a config object directly (not a pre-created
+  // client). The libSQL driver handles both local file: URLs (development)
+  // and remote libsql:// URLs (Turso / serverless production).
+  const adapter = new PrismaLibSql({
     url,
     authToken: process.env.DATABASE_AUTH_TOKEN,
   });
-  const adapter = new PrismaLibSql(libsql);
   return new PrismaClient({ adapter });
 }
 
@@ -51,5 +42,3 @@ export const db = new Proxy({} as PrismaClient, {
       : value;
   },
 });
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = undefined;
