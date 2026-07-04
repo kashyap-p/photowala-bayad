@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { GalleryView } from "./gallery-view";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Lock, Camera, ArrowLeft } from "lucide-react";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/admin";
@@ -35,6 +35,61 @@ export default function AdminLoginPage() {
     router.push(callbackUrl);
     router.refresh();
   };
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div className="space-y-2">
+        <Label className="font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground">
+          Email
+        </Label>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@photowalabayad.com"
+          required
+          autoComplete="email"
+          className="h-11"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label className="font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground">
+          Password
+        </Label>
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••••"
+          required
+          autoComplete="current-password"
+          className="h-11"
+        />
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      <Button type="submit" disabled={loading} className="h-11 w-full">
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> Signing in…
+          </>
+        ) : (
+          <>
+            <Lock className="h-4 w-4" /> Sign in
+          </>
+        )}
+      </Button>
+    </form>
+  );
+}
+
+export default function AdminLoginPage() {
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -65,58 +120,15 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-2">
-            <Label className="font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground">
-              Email
-            </Label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@photowalabayad.com"
-              required
-              autoComplete="email"
-              className="h-11"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground">
-              Password
-            </Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-              className="h-11"
-            />
-          </div>
-
-          {error && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {error}
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          )}
-
-          <Button
-            type="submit"
-            disabled={loading}
-            className="h-11 w-full"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Signing in…
-              </>
-            ) : (
-              <>
-                <Lock className="h-4 w-4" /> Sign in
-              </>
-            )}
-          </Button>
-        </form>
+          }
+        >
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );
