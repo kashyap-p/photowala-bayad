@@ -95,14 +95,14 @@ export function Contact() {
                 {
                   icon: Phone,
                   label: "Call / WhatsApp",
-                  value: "+91 98xxx xxxxx",
-                  href: "tel:+919800000000",
+                  value: "+91 63532 27978",
+                  href: "tel:+916353227978",
                 },
                 {
                   icon: Mail,
                   label: "Email",
-                  value: "hello@photowalabayad.com",
-                  href: "mailto:hello@photowalabayad.com",
+                  value: "photowalamodellingstudio@gmail.com",
+                  href: "mailto:photowalamodellingstudio@gmail.com",
                 },
                 {
                   icon: MapPin,
@@ -214,7 +214,7 @@ export function Contact() {
                       <Input
                         value={form.phone}
                         onChange={(e) => update("phone", e.target.value)}
-                        placeholder="+91 98xxx xxxxx"
+                        placeholder="+91 63532 27978"
                         className="h-11"
                       />
                     </Field>

@@ -72,10 +72,10 @@ export function Footer() {
             </div>
             <ul className="mt-4 space-y-3 text-sm">
               <li className="flex items-center gap-2.5 text-muted-foreground">
-                <Phone className="h-4 w-4 text-accent" /> +91 98xxx xxxxx
+                <Phone className="h-4 w-4 text-accent" /> +91 63532 27978
               </li>
               <li className="flex items-center gap-2.5 text-muted-foreground">
-                <Mail className="h-4 w-4 text-accent" /> hello@photowalabayad.com
+                <Mail className="h-4 w-4 text-accent" /> photowalamodellingstudio@gmail.com
               </li>
               <li className="flex items-start gap-2.5 text-muted-foreground">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" />

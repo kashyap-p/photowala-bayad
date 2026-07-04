@@ -64,17 +64,17 @@ async function generateResponse(userMessage: string): Promise<string> {
 
   // 3. Pricing
   if (matchAny(msg, ["price", "cost", "how much", "rate", "charge", "fee", "quote", "package", "afford"])) {
-    return "Pricing depends on the event type, duration, location, and deliverables. The best way to get an accurate quote is to fill out the contact form on this page (scroll down to Contact) or call/WhatsApp the studio at +91 98xxx xxxxx — they reply within 24 hours with a tailored package.";
+    return "Pricing depends on the event type, duration, location, and deliverables. The best way to get an accurate quote is to fill out the contact form on this page (scroll down to Contact) or call/WhatsApp the studio at +91 63532 27978 — they reply within 24 hours with a tailored package.";
   }
 
   // 4. Booking
   if (matchAny(msg, ["book", "booking", "schedule", "available", "availability", "reserve", "hire"])) {
-    return "To book a shoot, the easiest way is to scroll down to the Contact form on this page and share your date, venue, and what kind of coverage you need. You can also call or WhatsApp +91 98xxx xxxxx directly. The studio is available for 2026 bookings and replies within 24 hours.";
+    return "To book a shoot, the easiest way is to scroll down to the Contact form on this page and share your date, venue, and what kind of coverage you need. You can also call or WhatsApp +91 63532 27978 directly. The studio is available for 2026 bookings and replies within 24 hours.";
   }
 
   // 5. Contact
   if (matchAny(msg, ["contact", "reach", "phone", "call", "email", "whatsapp", "instagram", "where", "address", "location", "studio"])) {
-    return "Here's how to reach Photowala Bayad:\n\n📞 Phone / WhatsApp: +91 98xxx xxxxx\n📧 Email: hello@photowalabayad.com\n📱 Instagram: @photowala_bayad\n📍 Studio: Bayad, Sabarkantha, Gujarat 383 340\n🕘 Hours: Mon–Sat, 9 AM – 8 PM\n\nOr just scroll down to the Contact form on this page — it goes straight to the studio.";
+    return "Here's how to reach Photowala Bayad:\n\n📞 Phone / WhatsApp: +91 63532 27978\n📧 Email: photowalamodellingstudio@gmail.com\n📱 Instagram: @photowala_bayad\n📍 Studio: Bayad, Sabarkantha, Gujarat 383 340\n🕘 Hours: Mon–Sat, 9 AM – 8 PM\n\nOr just scroll down to the Contact form on this page — it goes straight to the studio.";
   }
 
   // 6. About / who
@@ -84,12 +84,12 @@ async function generateResponse(userMessage: string): Promise<string> {
 
   // 7. Wedding-specific
   if (matchAny(msg, ["wedding", "bride", "groom", "marriage", "shaadi", "mehndi", "haldi", "sangeet"])) {
-    return "Our wedding photography covers the full day — getting ready, the ceremony, and the celebration. Every package includes a pre-wedding shoot, candid + traditional coverage, same-day teasers for social media, and a finished album plus a digital gallery. To check availability for your date, fill out the Contact form below or call +91 98xxx xxxxx.";
+    return "Our wedding photography covers the full day — getting ready, the ceremony, and the celebration. Every package includes a pre-wedding shoot, candid + traditional coverage, same-day teasers for social media, and a finished album plus a digital gallery. To check availability for your date, fill out the Contact form below or call +91 63532 27978.";
   }
 
   // 8. Portrait-specific
   if (matchAny(msg, ["portrait", "headshot", "family photo", "individual", "profile"])) {
-    return "Portrait sessions can be in-studio or on-location. We use professional lighting, guide you on wardrobe and posing, and deliver retouched, print-ready files. Sessions typically run 1–2 hours. Book one through the Contact form below or call +91 98xxx xxxxx.";
+    return "Portrait sessions can be in-studio or on-location. We use professional lighting, guide you on wardrobe and posing, and deliver retouched, print-ready files. Sessions typically run 1–2 hours. Book one through the Contact form below or call +91 63532 27978.";
   }
 
   // 9. Event-specific

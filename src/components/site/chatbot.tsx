@@ -70,7 +70,7 @@ export function Chatbot() {
           {
             role: "assistant",
             content:
-              "Sorry, I had trouble with that. You can also reach the studio directly at hello@photowalabayad.com or +91 98xxx xxxxx.",
+              "Sorry, I had trouble with that. You can also reach the studio directly at photowalamodellingstudio@gmail.com or +91 63532 27978.",
           },
         ]);
       }
@@ -80,7 +80,7 @@ export function Chatbot() {
         {
           role: "assistant",
           content:
-            "I'm having connection issues right now. Please try again, or reach the studio at hello@photowalabayad.com.",
+            "I'm having connection issues right now. Please try again, or reach the studio at photowalamodellingstudio@gmail.com.",
         },
       ]);
     } finally {

@@ -4,7 +4,7 @@ import { db, isDatabaseConfigured } from "@/lib/db";
 const NOT_CONFIGURED = {
   ok: false,
   error:
-    "The contact form is not connected to a database yet. Please email hello@photowalabayad.com directly while we finish setup.",
+    "The contact form is not connected to a database yet. Please email photowalamodellingstudio@gmail.com directly while we finish setup.",
 };
 
 export async function POST(req: NextRequest) {

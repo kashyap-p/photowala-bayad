@@ -413,7 +413,7 @@ All photographs and source code © **PHOTOWALA BAYAD**. All rights reserved.
 
 <div align="center">
 
-**[🌐 Live Site](https://photowala-bayad.vercel.app)** · **[📸 Instagram](https://www.instagram.com/photowala_bayad/)** · **[📧 Contact](mailto:hello@photowalabayad.com)**
+**[🌐 Live Site](https://photowala-bayad.vercel.app)** · **[📸 Instagram](https://www.instagram.com/photowala_bayad/)** · **[📧 Contact](mailto:photowalamodellingstudio@gmail.com)**
 
 Built with light, story, and soul in Bayad, Gujarat. 🇮🇳
 
