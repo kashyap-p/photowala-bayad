@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { CinematicLoader } from "@/components/site/cinematic-loader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,18 +36,24 @@ export const metadata: Metadata = {
     "Indian wedding photography",
   ],
   authors: [{ name: "PHOTOWALA BAYAD" }],
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
     title: "PHOTOWALA BAYAD — Photography Studio",
     description:
       "Capturing weddings, portraits, events & the streets of India. Timeless frames with light, story and soul.",
     siteName: "PHOTOWALA BAYAD",
     type: "website",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "PHOTOWALA BAYAD — Photography Studio",
     description:
       "Capturing weddings, portraits, events & the streets of India.",
+    images: ["/logo.png"],
   },
 };
 
@@ -60,6 +67,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bebas.variable} antialiased bg-background text-foreground`}
       >
+        <CinematicLoader />
         {children}
         <Toaster />
       </body>

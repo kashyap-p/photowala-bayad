@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Instagram, Camera, Lock } from "lucide-react";
+import { Menu, X, Instagram, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -49,9 +49,9 @@ export function Navbar() {
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="group flex items-center gap-2.5"
           >
-            <span className="relative grid h-8 w-8 place-items-center rounded-full border border-foreground/20">
-              <Camera className="h-4 w-4" />
-              <span className="absolute inset-0 rounded-full border border-accent/0 transition-colors group-hover:border-accent/60" />
+            <span className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-full">
+              <img src="/logo.png" alt="Photowala Bayad logo" className="h-full w-full object-cover" />
+              <span className="absolute inset-0 rounded-full ring-1 ring-inset ring-foreground/20 transition-colors group-hover:ring-accent/60" />
             </span>
             <span className="flex flex-col leading-[0.9]">
               <span className="font-mono-label text-[9px] uppercase tracking-[0.3em] text-muted-foreground">

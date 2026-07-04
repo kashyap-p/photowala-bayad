@@ -565,21 +565,16 @@ function GalleryDetail({
           errors.push(`${file.name}: not an image`);
           continue;
         }
-        // validate size (max 4MB to stay within serverless body limits when
-        // sending the data URL to the photos API)
-        if (file.size > 4 * 1024 * 1024) {
-          errors.push(`${file.name}: too large (max 4MB)`);
+        // validate size (max 15MB)
+        if (file.size > 15 * 1024 * 1024) {
+          errors.push(`${file.name}: too large (max 15MB)`);
           continue;
         }
 
-        // Convert to base64 data URL in the browser — no server upload needed.
-        // This works on Vercel's read-only serverless filesystem.
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
-          reader.readAsDataURL(file);
-        });
+        // Compress + resize the image client-side via canvas, then convert
+        // to a base64 data URL. This keeps the payload small enough for
+        // Vercel's serverless body limit while accepting large source files.
+        const dataUrl = await compressImage(file, 2000, 0.85);
         urls.push(dataUrl);
       }
 
@@ -724,7 +719,7 @@ function GalleryDetail({
               {uploading ? "Uploading…" : "Upload from device"}
             </span>
             <span className="text-xs text-muted-foreground">
-              Click to choose photos — JPG, PNG, WebP (max 4MB each)
+              Click to choose photos — JPG, PNG, WebP (max 15MB each)
             </span>
           </label>
         </div>
@@ -1062,4 +1057,52 @@ function Field({
       {children}
     </div>
   );
+}
+
+/**
+ * Compresses and resizes an image File client-side using a canvas, then
+ * returns a base64 data URL. This keeps the payload small enough for
+ * serverless body limits while accepting large source files (up to 15MB).
+ */
+async function compressImage(
+  file: File,
+  maxDimension: number,
+  quality: number
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // calculate scaled dimensions
+        let { width, height } = img;
+        if (width > height && width > maxDimension) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else if (height > maxDimension) {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // PNGs with transparency stay PNG; everything else becomes JPEG
+        const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
+        const dataUrl = canvas.toDataURL(mime, quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error(`Could not load ${file.name}`));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.readAsDataURL(file);
+  });
 }

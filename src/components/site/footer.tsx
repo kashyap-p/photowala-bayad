@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Instagram, Mail, Phone, MapPin, ArrowUp } from "lucide-react";
+import { Instagram, Mail, Phone, MapPin, ArrowUp } from "lucide-react";
 
 export function Footer() {
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -13,8 +13,8 @@ export function Footer() {
           {/* brand */}
           <div className="md:col-span-5">
             <div className="flex items-center gap-2.5">
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-foreground/20">
-                <Camera className="h-4 w-4" />
+              <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-full ring-1 ring-inset ring-foreground/20">
+                <img src="/logo.png" alt="Photowala Bayad logo" className="h-full w-full object-cover" />
               </span>
               <div className="leading-[0.9]">
                 <div className="font-mono-label text-[9px] uppercase tracking-[0.3em] text-muted-foreground">
