@@ -9,9 +9,11 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    throw new Error(
-      "DATABASE_URL is not set. See .env.example for the expected format."
-    );
+    // No DATABASE_URL — return a stub that throws on use. The contact route
+    // checks `process.env.DATABASE_URL` first and short-circuits, so this
+    // keeps the rest of the app (static pages, assets) serving fine even
+    // before the database is wired up on Vercel.
+    throw new Error("DATABASE_URL is not set.");
   }
 
   // Local development: file-based SQLite, standard Prisma client.
@@ -31,6 +33,23 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+function getDb(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
+  return globalForPrisma.prisma;
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// Export a proxy so the client is created lazily on first use. This lets the
+// app boot even when DATABASE_URL is unset (e.g. before Turso is configured).
+export const db = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getDb();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof value === "function"
+      ? (value as (...args: unknown[]) => unknown).bind(client)
+      : value;
+  },
+});
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = undefined;
