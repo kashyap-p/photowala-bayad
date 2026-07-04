@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import ZAI from "z-ai-web-dev-sdk";
 import { db, isDatabaseConfigured } from "@/lib/db";
 
@@ -44,6 +47,29 @@ CONVERSATION GUIDELINES:
 - Never make up specific prices, dates, or availability — direct those enquiries to the studio.
 - If the user seems interested in booking, encourage them to use the contact form or call.`;
 
+/**
+ * Ensures the z-ai config file exists. On Vercel, the /etc/.z-ai-config file
+ * isn't available, so we write one to the home directory from env vars.
+ */
+async function ensureConfig(): Promise<void> {
+  const configPath = join(homedir(), ".z-ai-config");
+  try {
+    // If env vars are set, write the config file
+    if (process.env.ZAI_BASEURL && process.env.ZAI_APIKEY) {
+      const config = {
+        baseUrl: process.env.ZAI_BASEURL,
+        apiKey: process.env.ZAI_APIKEY,
+        chatId: process.env.ZAI_CHATID || "",
+        token: process.env.ZAI_TOKEN || "",
+        userId: process.env.ZAI_USERID || "",
+      };
+      await writeFile(configPath, JSON.stringify(config), "utf-8");
+    }
+  } catch (err) {
+    console.error("[chat] could not write config", err);
+  }
+}
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -68,6 +94,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Ensure z-ai config is available (writes from env vars on Vercel)
+    await ensureConfig();
 
     // Check if the user is asking about their gallery/photos
     const galleryContext = await lookupGalleryContext(lastUserMessage.content);
@@ -143,7 +172,6 @@ async function lookupGalleryContext(userMessage: string): Promise<string | null>
 
     const msgLower = userMessage.toLowerCase();
     for (const g of galleries) {
-      // Check if the client's first name or full name appears in the message
       const nameParts = g.clientName.toLowerCase().split(/\s+/);
       const firstName = nameParts[0];
       if (firstName.length > 2 && msgLower.includes(firstName)) {
