@@ -28,6 +28,21 @@ export function About() {
       className="relative scroll-mt-20 border-t border-foreground/10 py-20 sm:py-28"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* section header — matches Services style */}
+        <div className="mb-12 flex flex-col gap-6 border-b border-foreground/10 pb-8 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="mb-3 font-mono-label text-[10px] uppercase tracking-[0.3em] text-accent">
+              [ 04 ] — The maker
+            </div>
+            <h2 className="max-w-xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+              Nine years of chasing light across Gujarat — and counting.
+            </h2>
+          </div>
+          <p className="max-w-sm text-sm text-muted-foreground sm:text-base">
+            The story, the approach, and the person behind every frame.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           {/* portrait */}
           <div className="lg:col-span-5">
@@ -38,9 +53,6 @@ export function About() {
               transition={{ duration: 0.6 }}
               className="relative"
             >
-              <div className="absolute -left-3 -top-3 font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground">
-                [ 04 ] — The maker
-              </div>
               <div className="overflow-hidden rounded-2xl border border-foreground/10">
                 <img
                   src="/gallery/maker.jpg"
@@ -59,21 +71,12 @@ export function About() {
 
           {/* text */}
           <div className="lg:col-span-7">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.6 }}
-              className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl"
-            >
-              Nine years of chasing light across Gujarat — and counting.
-            </motion.h2>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ delay: 0.1, duration: 0.6 }}
-              className="mt-6 space-y-4 text-base text-muted-foreground"
+              className="space-y-4 text-base text-muted-foreground"
             >
               <p>
                 PHOTOWALA BAYAD began as a single camera and a stubborn belief
