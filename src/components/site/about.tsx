@@ -43,7 +43,7 @@ export function About() {
               </div>
               <div className="overflow-hidden rounded-2xl border border-foreground/10">
                 <img
-                  src="/gallery/about-photographer.png"
+                  src="/gallery/photo-09.jpg"
                   alt="The photographer behind PHOTOWALA BAYAD"
                   className="aspect-[4/5] w-full object-cover"
                 />

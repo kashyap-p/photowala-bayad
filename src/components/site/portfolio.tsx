@@ -1,20 +1,51 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { Camera, MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar, X, ChevronLeft, ChevronRight, Camera } from "lucide-react";
 import { portfolio, categories, type Category } from "@/lib/portfolio";
+import { SmartImage } from "@/components/site/smart-image";
 import { cn } from "@/lib/utils";
 
 type Filter = "All" | Category;
 
 export function Portfolio() {
   const [filter, setFilter] = useState<Filter>("All");
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const visible = useMemo(() => {
     if (filter === "All") return portfolio;
     return portfolio.filter((p) => p.category === filter);
   }, [filter]);
+
+  const openLightbox = useCallback((idx: number) => setLightboxIdx(idx), []);
+  const closeLightbox = useCallback(() => setLightboxIdx(null), []);
+
+  const navigate = useCallback(
+    (dir: number) => {
+      setLightboxIdx((prev) => {
+        if (prev === null) return prev;
+        return (prev + dir + visible.length) % visible.length;
+      });
+    },
+    [visible.length]
+  );
+
+  // keyboard navigation in lightbox
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowRight") navigate(1);
+      if (e.key === "ArrowLeft") navigate(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [lightboxIdx, closeLightbox, navigate]);
 
   return (
     <section id="work" className="relative scroll-mt-20 py-20 sm:py-28">
@@ -30,8 +61,8 @@ export function Portfolio() {
             </h2>
           </div>
           <p className="max-w-sm text-sm text-muted-foreground sm:text-base">
-            A rotating selection of recent shoots across weddings, portraits,
-            events and the streets. Tap any frame to enlarge.
+            A rotating selection of recent shoots. Tap any frame to enlarge —
+            use arrow keys to browse.
           </p>
         </div>
 
@@ -63,135 +94,194 @@ export function Portfolio() {
           </span>
         </div>
 
-        {/* grid */}
+        {/* masonry grid */}
         <LayoutGroup>
           <motion.div
             layout
-            className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
+            className="columns-2 gap-3 sm:gap-4 lg:columns-3 [&>*]:mb-3 sm:[&>*]:mb-4"
           >
             <AnimatePresence mode="popLayout">
-              {visible.map((p) => (
-                <PhotoCard key={p.id} photo={p} />
+              {visible.map((p, i) => (
+                <PhotoCard
+                  key={p.id}
+                  photo={p}
+                  index={i}
+                  onOpen={openLightbox}
+                />
               ))}
             </AnimatePresence>
           </motion.div>
         </LayoutGroup>
       </div>
+
+      {/* lightbox */}
+      <AnimatePresence>
+        {lightboxIdx !== null && visible[lightboxIdx] && (
+          <Lightbox
+            photo={visible[lightboxIdx]}
+            index={lightboxIdx}
+            total={visible.length}
+            onClose={closeLightbox}
+            onNavigate={navigate}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
 function PhotoCard({
   photo,
+  index,
+  onOpen,
 }: {
   photo: (typeof portfolio)[number];
+  index: number;
+  onOpen: (idx: number) => void;
 }) {
-  const [zoom, setZoom] = useState(false);
-
-  const spanClass =
-    photo.span === "tall"
-      ? "row-span-2"
-      : photo.span === "wide"
-      ? "col-span-2"
-      : "";
-
   return (
-    <>
-      <motion.button
-        layout
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        onClick={() => setZoom(true)}
-        className={cn(
-          "group relative overflow-hidden rounded-xl border border-foreground/10 bg-foreground/5",
-          "aspect-square",
-          spanClass
-        )}
+    <motion.button
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{
+        duration: 0.5,
+        delay: Math.min(index * 0.05, 0.3),
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      onClick={() => onOpen(index)}
+      className="group relative block w-full overflow-hidden rounded-xl border border-foreground/10 bg-foreground/5 break-inside-avoid"
+    >
+      {/* image */}
+      <SmartImage
+        src={photo.image}
+        alt={photo.title}
+        className="w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+      />
+
+      {/* gradient overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      {/* meta on hover */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-3 p-4 text-left opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+        <div className="font-mono-label text-[10px] uppercase tracking-widest text-accent">
+          {photo.category}
+        </div>
+        <div className="mt-1 text-base font-semibold text-white">
+          {photo.title}
+        </div>
+        <div className="mt-1 flex items-center gap-3 text-[11px] text-white/70">
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="h-3 w-3" /> {photo.location}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Calendar className="h-3 w-3" /> {photo.year}
+          </span>
+        </div>
+      </div>
+
+      {/* corner camera icon */}
+      <div className="absolute left-3 top-3 grid h-7 w-7 place-items-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <Camera className="h-3 w-3" />
+      </div>
+
+      {/* expand hint */}
+      <div className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <ChevronRight className="h-3 w-3 rotate-45" />
+      </div>
+    </motion.button>
+  );
+}
+
+function Lightbox({
+  photo,
+  index,
+  total,
+  onClose,
+  onNavigate,
+}: {
+  photo: (typeof portfolio)[number];
+  index: number;
+  total: number;
+  onClose: () => void;
+  onNavigate: (dir: number) => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-4 backdrop-blur-md"
+    >
+      {/* close button */}
+      <button
+        onClick={onClose}
+        className="absolute right-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition-colors hover:bg-white hover:text-black"
       >
-        {/* image */}
-        <img
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* prev/next */}
+      {total > 1 && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(-1);
+            }}
+            className="absolute left-4 z-10 grid h-12 w-12 place-items-center rounded-full border border-white/20 text-white transition-colors hover:bg-white hover:text-black"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(1);
+            }}
+            className="absolute right-4 z-10 grid h-12 w-12 place-items-center rounded-full border border-white/20 text-white transition-colors hover:bg-white hover:text-black"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </>
+      )}
+
+      {/* image */}
+      <motion.div
+        key={photo.id}
+        initial={{ scale: 0.92, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 28 }}
+        className="relative max-h-[85vh] max-w-4xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SmartImage
           src={photo.image}
           alt={photo.title}
-          loading="lazy"
-          className={cn(
-            "h-full w-full object-cover transition-all duration-700 ease-out",
-            "group-hover:scale-[1.06]",
-            photo.span === "wide" && "aspect-[2/1]",
-            photo.span === "tall" && "aspect-[1/2]"
-          )}
+          className="max-h-[78vh] w-full rounded-xl object-contain"
         />
-        {/* gradient + meta */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-3 p-4 text-left opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          <div className="font-mono-label text-[10px] uppercase tracking-widest text-accent">
-            {photo.category}
+        {/* caption */}
+        <div className="mt-4 flex items-end justify-between gap-4">
+          <div>
+            <div className="font-mono-label text-[10px] uppercase tracking-widest text-accent">
+              {photo.category} · {photo.year}
+            </div>
+            <div className="mt-1 text-2xl font-semibold text-white">
+              {photo.title}
+            </div>
+            <div className="mt-1 flex items-center gap-1 text-sm text-white/70">
+              <MapPin className="h-3.5 w-3.5" /> {photo.location}
+            </div>
           </div>
-          <div className="mt-1 text-base font-semibold text-white">
-            {photo.title}
-          </div>
-          <div className="mt-1 flex items-center gap-3 text-[11px] text-white/70">
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> {photo.location}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> {photo.year}
-            </span>
-          </div>
+          {total > 1 && (
+            <div className="font-mono-label text-xs text-white/40">
+              {index + 1} / {total}
+            </div>
+          )}
         </div>
-        {/* corner index */}
-        <div className="absolute left-3 top-3 grid h-7 w-7 place-items-center rounded-full border border-white/30 bg-black/40 font-mono-label text-[10px] text-white backdrop-blur opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <Camera className="h-3 w-3" />
-        </div>
-      </motion.button>
-
-      {/* lightbox */}
-      <AnimatePresence>
-        {zoom && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setZoom(false)}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border border-white/10"
-            >
-              <img
-                src={photo.image}
-                alt={photo.title}
-                className="max-h-[80vh] w-full object-contain"
-              />
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 bg-gradient-to-t from-black/90 to-transparent p-6">
-                <div>
-                  <div className="font-mono-label text-[10px] uppercase tracking-widest text-accent">
-                    {photo.category} · {photo.year}
-                  </div>
-                  <div className="mt-1 text-2xl font-semibold text-white">
-                    {photo.title}
-                  </div>
-                  <div className="mt-1 flex items-center gap-1 text-sm text-white/70">
-                    <MapPin className="h-3.5 w-3.5" /> {photo.location}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setZoom(false)}
-                  className="rounded-full border border-white/20 px-4 py-2 text-sm text-white transition-colors hover:bg-white hover:text-black"
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+      </motion.div>
+    </motion.div>
   );
 }
