@@ -43,9 +43,9 @@ export function About() {
               </div>
               <div className="overflow-hidden rounded-2xl border border-foreground/10">
                 <img
-                  src="/gallery/photo-09.jpg"
+                  src="/gallery/maker.jpg"
                   alt="The photographer behind PHOTOWALA BAYAD"
-                  className="aspect-[4/5] w-full object-cover"
+                  className="aspect-[4/5] w-full object-cover object-top"
                 />
               </div>
               <div className="mt-4 flex items-center justify-between font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground">

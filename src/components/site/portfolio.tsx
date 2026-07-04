@@ -151,13 +151,13 @@ function PhotoCard({
         ease: [0.22, 1, 0.36, 1],
       }}
       onClick={() => onOpen(index)}
-      className="group relative block w-full overflow-hidden rounded-xl border border-foreground/10 bg-foreground/5 break-inside-avoid"
+      className="group relative block w-full overflow-hidden rounded-xl border border-foreground/10 bg-foreground/5 break-inside-avoid aspect-[3/4]"
     >
-      {/* image */}
+      {/* image — fixed aspect ratio, crop from top */}
       <SmartImage
         src={photo.image}
         alt={photo.title}
-        className="w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+        className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.05]"
       />
 
       {/* gradient overlay */}

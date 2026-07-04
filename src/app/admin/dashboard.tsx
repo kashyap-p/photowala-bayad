@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import {
   Loader2, Plus, Link2, Copy, Check, Trash2, Images, Lock, Unlock,
   Calendar, Mail, User, ExternalLink, ArrowLeft, X, Camera, LogOut,
-  ChevronRight, Inbox, MailOpen, Phone, Tag, Clock,
+  ChevronRight, Inbox, MailOpen, Phone, Tag, Clock, Upload, FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -460,6 +460,7 @@ function GalleryDetail({
   const [urlInput, setUrlInput] = useState("");
   const [captionInput, setCaptionInput] = useState("");
   const [adding, setAdding] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showPortfolio, setShowPortfolio] = useState(false);
 
   const loadPhotos = useCallback(async () => {
@@ -547,6 +548,41 @@ function GalleryDetail({
       });
     } finally {
       setAdding(false);
+    }
+  };
+
+  const uploadFromDevice = async (files: FileList) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((f) => formData.append("files", f));
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      if (data.urls.length === 0) {
+        throw new Error("No files were uploaded.");
+      }
+      // add the uploaded URLs to the gallery
+      await addFromPortfolio(data.urls);
+      if (data.errors?.length) {
+        toast({
+          title: "Some files skipped",
+          description: data.errors.join(", "),
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Upload failed",
+        description: err instanceof Error ? err.message : "Try again",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -640,6 +676,47 @@ function GalleryDetail({
       {/* add photos */}
       <div className="mb-6 rounded-2xl border border-foreground/10 bg-card p-5">
         <h3 className="mb-3 text-sm font-medium">Add photos</h3>
+
+        {/* upload from device */}
+        <div className="mb-4">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              if (e.target.files) uploadFromDevice(e.target.files);
+              e.target.value = "";
+            }}
+            className="hidden"
+            id="file-upload"
+          />
+          <label
+            htmlFor="file-upload"
+            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-foreground/15 py-8 text-center transition-colors hover:border-accent hover:bg-accent/[0.03]"
+          >
+            {uploading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-accent" />
+            ) : (
+              <Upload className="h-6 w-6 text-muted-foreground" />
+            )}
+            <span className="text-sm font-medium">
+              {uploading ? "Uploading…" : "Upload from device"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Click to choose photos — JPG, PNG, WebP (max 10MB each)
+            </span>
+          </label>
+        </div>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-foreground/10" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-card px-3 text-xs text-muted-foreground">or add by URL</span>
+          </div>
+        </div>
+
         <form onSubmit={addByUrl} className="flex flex-wrap items-end gap-3">
           <div className="min-w-[200px] flex-1">
             <Label className="font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -648,7 +725,7 @@ function GalleryDetail({
             <Input
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="https://… or /gallery/wedding-1.png"
+              placeholder="https://… or /gallery/photo-01.jpg"
               className="mt-1"
             />
           </div>
@@ -670,8 +747,9 @@ function GalleryDetail({
         </form>
         <button
           onClick={() => setShowPortfolio((v) => !v)}
-          className="mt-3 text-sm text-accent underline-offset-4 hover:underline"
+          className="mt-3 inline-flex items-center gap-1.5 text-sm text-accent underline-offset-4 hover:underline"
         >
+          <FolderOpen className="h-3.5 w-3.5" />
           {showPortfolio ? "Hide" : "Pick from"} existing portfolio photos
         </button>
         {showPortfolio && (
