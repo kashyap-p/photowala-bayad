@@ -8,10 +8,12 @@ import { Testimonials } from "@/components/site/testimonials";
 import { Contact } from "@/components/site/contact";
 import { Footer } from "@/components/site/footer";
 import { Chatbot } from "@/components/site/chatbot";
+import { CinematicLoader } from "@/components/site/cinematic-loader";
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
+      <CinematicLoader />
       <Navbar />
       <main className="flex-1">
         <Hero />
