@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { portfolio } from "@/lib/portfolio";
+import { SmartImage } from "@/components/site/smart-image";
 
 interface Photo {
   id: string;
@@ -488,14 +489,24 @@ function GalleryDetail({
 
   const addByUrl = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!urlInput.trim() || adding) return;
+    const url = urlInput.trim();
+    if (!url || adding) return;
+    // validate: must be a relative path starting with / or an http(s) URL
+    if (!url.startsWith("/") && !/^https?:\/\//i.test(url)) {
+      toast({
+        title: "Invalid image URL",
+        description: "Use a path like /gallery/wedding-1.png or a full https:// URL.",
+        variant: "destructive",
+      });
+      return;
+    }
     setAdding(true);
     try {
       const res = await fetch(`/api/galleries/${gallery.id}/photos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          photos: [{ url: urlInput.trim(), caption: captionInput.trim() || undefined }],
+          photos: [{ url, caption: captionInput.trim() || undefined }],
         }),
       });
       const data = await res.json();
@@ -672,7 +683,7 @@ function GalleryDetail({
                 disabled={adding}
                 className="group relative aspect-square overflow-hidden rounded-lg border border-foreground/10 transition-transform hover:scale-105 disabled:opacity-50"
               >
-                <img
+                <SmartImage
                   src={p.image}
                   alt={p.title}
                   className="h-full w-full object-cover"
@@ -705,7 +716,7 @@ function GalleryDetail({
               key={p.id}
               className="group relative aspect-square overflow-hidden rounded-lg border border-foreground/10"
             >
-              <img
+              <SmartImage
                 src={p.url}
                 alt={p.caption || ""}
                 className="h-full w-full object-cover"

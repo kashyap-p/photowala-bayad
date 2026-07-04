@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Instagram, Camera } from "lucide-react";
+import { Menu, X, Instagram, Camera, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -79,6 +79,14 @@ export function Navbar() {
 
           <div className="hidden items-center gap-2 md:flex">
             <a
+              href="/admin/login"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              title="Studio login"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Studio
+            </a>
+            <a
               href="https://www.instagram.com/photowala_bayad/?hl=en"
               target="_blank"
               rel="noreferrer"
@@ -147,6 +155,12 @@ export function Navbar() {
                 className="mt-6 flex items-center gap-3 text-muted-foreground"
               >
                 <Instagram className="h-5 w-5" /> @photowala_bayad
+              </a>
+              <a
+                href="/admin/login"
+                className="flex items-center gap-3 text-muted-foreground"
+              >
+                <Lock className="h-5 w-5" /> Studio login
               </a>
               <button
                 onClick={() => go("#contact")}

@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SmartImage } from "@/components/site/smart-image";
 
 interface Photo {
   id: string;
@@ -245,7 +246,7 @@ function PhotoGrid({ photos }: { photos: Photo[] }) {
             onClick={() => setLightbox(i)}
             className="group relative block w-full overflow-hidden rounded-xl border border-foreground/10 break-inside-avoid"
           >
-            <img
+            <SmartImage
               src={p.url}
               alt={p.caption || ""}
               className="w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
@@ -304,7 +305,7 @@ function PhotoGrid({ photos }: { photos: Photo[] }) {
               className="relative max-h-[85vh] max-w-5xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
+              <SmartImage
                 src={photos[lightbox].url}
                 alt={photos[lightbox].caption || ""}
                 className="max-h-[80vh] w-full object-contain rounded-lg"
