@@ -7,25 +7,25 @@ import { Aperture } from "lucide-react";
 const TITLE = "PHOTOWALA BAYAD".split("");
 
 /**
- * Cinematic first-load intro: a full-screen black overlay showing the
- * PHOTOWALA BAYAD wordmark revealing letter-by-letter with an animated
- * aperture, then fades away. Only plays once per session (sessionStorage).
+ * Cinematic intro: a full-screen black overlay showing the PHOTOWALA BAYAD
+ * wordmark revealing letter-by-letter with an animated aperture, then fades
+ * away. Plays on every page load/refresh.
+ *
+ * Uses a mounted flag to avoid hydration mismatch — the server renders
+ * nothing, then the client shows the loader after mount.
  */
 export function CinematicLoader() {
-  // Lazy init: show only on first visit per session
-  const [show, setShow] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const seen = sessionStorage.getItem("pb-intro-played");
-    if (seen) return false;
-    sessionStorage.setItem("pb-intro-played", "1");
-    return true;
-  });
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!show) return;
+    // Show the loader on every page load/refresh after hydration.
+    // setState in effect is intentional — we must render show=false on the
+    // server (no window) to avoid hydration mismatch, then flip to true.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShow(true);
     const timer = setTimeout(() => setShow(false), 3000);
     return () => clearTimeout(timer);
-  }, [show]);
+  }, []);
 
   return (
     <AnimatePresence>
