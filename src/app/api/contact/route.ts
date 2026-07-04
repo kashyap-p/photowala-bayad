@@ -22,6 +22,19 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, phone, service, message } = body ?? {};
 
+    // TEMP DEBUG: show what env vars are reaching the runtime
+    const _debugEnv = {
+      DATABASE_URL_set: typeof process.env.DATABASE_URL === "string",
+      DATABASE_URL_prefix: process.env.DATABASE_URL?.substring(0, 20),
+      DATABASE_URL_length: process.env.DATABASE_URL?.length,
+      DATABASE_AUTH_TOKEN_set: typeof process.env.DATABASE_AUTH_TOKEN === "string",
+      DATABASE_AUTH_TOKEN_length: process.env.DATABASE_AUTH_TOKEN?.length,
+      all_env_keys: Object.keys(process.env).filter(k => k.includes("DATABASE") || k.includes("TURSO") || k.includes("LIBSQL")),
+    };
+    if (req.headers.get("x-debug-env")) {
+      return NextResponse.json({ _debugEnv });
+    }
+
     if (!name || typeof name !== "string" || name.trim().length < 2) {
       return NextResponse.json(
         { ok: false, error: "Please tell us your name." },
