@@ -29,8 +29,9 @@ yarn-error.log*
 .pnpm-debug.log*
 *.log
 
-# env files
+# env files (commit the example template, ignore real secrets)
 .env*
+!.env.example
 
 # vercel
 .vercel
