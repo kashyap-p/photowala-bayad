@@ -7,6 +7,7 @@ import { About } from "@/components/site/about";
 import { Testimonials } from "@/components/site/testimonials";
 import { Contact } from "@/components/site/contact";
 import { Footer } from "@/components/site/footer";
+import { Chatbot } from "@/components/site/chatbot";
 
 export default function Home() {
   return (
@@ -23,6 +24,7 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
+      <Chatbot />
     </div>
   );
 }

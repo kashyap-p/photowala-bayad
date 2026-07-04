@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-
-/**
- * Returns true if a database is actually configured. When the app is deployed
- * to Vercel without DATABASE_URL set (e.g. before Turso is wired up), the
- * Prisma client throws on first use — we surface a friendly message instead.
- */
-function isDatabaseConfigured(): boolean {
-  const url = process.env.DATABASE_URL;
-  return typeof url === "string" && url.length > 0 && !url.includes("REPLACE_ME");
-}
+import { db, isDatabaseConfigured } from "@/lib/db";
 
 const NOT_CONFIGURED = {
   ok: false,

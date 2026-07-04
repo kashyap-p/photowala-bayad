@@ -22,18 +22,25 @@ function LoginForm() {
     if (loading) return;
     setLoading(true);
     setError("");
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) {
-      setError("Wrong email or password. Please try again.");
-      return;
+    try {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      if (res?.error) {
+        setLoading(false);
+        setError("Wrong email or password. Please try again.");
+        return;
+      }
+      // Hard navigation ensures the new session cookie is sent with the
+      // request. Client-side router.push can race with cookie settlement.
+      window.location.href = callbackUrl;
+    } catch (err) {
+      setLoading(false);
+      setError("Something went wrong. Please try again.");
+      console.error("[login] signIn error", err);
     }
-    router.push(callbackUrl);
-    router.refresh();
   };
 
   return (

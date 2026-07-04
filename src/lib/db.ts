@@ -2,21 +2,17 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+  __prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    // No DATABASE_URL — the contact route checks this and short-circuits
-    // with a friendly message, so this throw only fires if code bypasses
-    // that check. Keeps the app bootable without a database configured.
     throw new Error("DATABASE_URL is not set.");
   }
 
-  // Prisma v7 adapter takes a config object directly (not a pre-created
-  // client). The libSQL driver handles both local file: URLs (development)
-  // and remote libsql:// URLs (Turso / serverless production).
+  // The libSQL adapter handles both local file: URLs (development) and
+  // remote libsql:// URLs (Turso / serverless production).
   const adapter = new PrismaLibSql({
     url,
     authToken: process.env.DATABASE_AUTH_TOKEN,
@@ -24,16 +20,22 @@ function createPrismaClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
+/**
+ * Lazily create the Prisma client on first use. Cached on globalThis so
+ * warm serverless invocations reuse the same connection pool.
+ */
 function getDb(): PrismaClient {
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = createPrismaClient();
+  if (!globalForPrisma.__prisma) {
+    globalForPrisma.__prisma = createPrismaClient();
   }
-  return globalForPrisma.prisma;
+  return globalForPrisma.__prisma;
 }
 
-// Export a proxy so the client is created lazily on first use. This lets the
-// app boot even when DATABASE_URL is unset (e.g. before Turso is configured).
-export const db = new Proxy({} as PrismaClient, {
+/**
+ * Export the client. Routes that use this should check isDatabaseConfigured()
+ * first if they want to handle the "no DB" case gracefully.
+ */
+export const db: PrismaClient = new Proxy({} as PrismaClient, {
   get(_target, prop) {
     const client = getDb();
     const value = (client as unknown as Record<string | symbol, unknown>)[prop];
@@ -42,3 +44,8 @@ export const db = new Proxy({} as PrismaClient, {
       : value;
   },
 });
+
+export function isDatabaseConfigured(): boolean {
+  const url = process.env.DATABASE_URL;
+  return typeof url === "string" && url.length > 0;
+}
