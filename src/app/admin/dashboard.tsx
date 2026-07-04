@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import {
   Loader2, Plus, Link2, Copy, Check, Trash2, Images, Lock, Unlock,
   Calendar, Mail, User, ExternalLink, ArrowLeft, X, Camera, LogOut,
-  ChevronRight,
+  ChevronRight, Inbox, MailOpen, Phone, Tag, Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,17 @@ interface Gallery {
   _count?: { photos: number };
 }
 
+interface Message {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  service: string | null;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export function Dashboard({
   adminEmail,
   adminName,
@@ -43,12 +54,15 @@ export function Dashboard({
   adminName?: string | null;
 }) {
   const { toast } = useToast();
+  const [tab, setTab] = useState<"galleries" | "messages">("galleries");
   const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Gallery | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
-  const load = useCallback(async () => {
+  const loadGalleries = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/galleries");
@@ -61,9 +75,26 @@ export function Dashboard({
     }
   }, [toast]);
 
+  const loadMessages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/messages");
+      const data = await res.json();
+      if (data.ok) {
+        setMessages(data.messages);
+        setUnreadCount(data.unread ?? 0);
+      }
+    } catch {
+      toast({ title: "Could not load messages", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    load();
-  }, [load]);
+    if (tab === "galleries") loadGalleries();
+    else loadMessages();
+  }, [tab, loadGalleries, loadMessages]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -97,48 +128,74 @@ export function Dashboard({
             </Button>
           </div>
         </div>
+        {/* tabs */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-1">
+            <TabButton
+              active={tab === "galleries"}
+              onClick={() => setTab("galleries")}
+              icon={<Images className="h-4 w-4" />}
+              label="Galleries"
+            />
+            <TabButton
+              active={tab === "messages"}
+              onClick={() => setTab("messages")}
+              icon={<Inbox className="h-4 w-4" />}
+              label="Messages"
+              badge={unreadCount}
+            />
+          </div>
+        </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {selected ? (
-          <GalleryDetail
-            gallery={selected}
-            onBack={() => {
-              setSelected(null);
-              load();
-            }}
-          />
-        ) : (
-          <>
-            <div className="mb-8 flex items-end justify-between">
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight">
-                  Client galleries
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Create private galleries, curate photos, and share secure links
-                  with your clients.
-                </p>
+        {tab === "galleries" ? (
+          selected ? (
+            <GalleryDetail
+              gallery={selected}
+              onBack={() => {
+                setSelected(null);
+                loadGalleries();
+              }}
+            />
+          ) : (
+            <>
+              <div className="mb-8 flex items-end justify-between">
+                <div>
+                  <h1 className="text-3xl font-semibold tracking-tight">
+                    Client galleries
+                  </h1>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Create private galleries, curate photos, and share secure links
+                    with your clients.
+                  </p>
+                </div>
+                <Button onClick={() => setShowCreate(true)}>
+                  <Plus className="h-4 w-4" /> New gallery
+                </Button>
               </div>
-              <Button onClick={() => setShowCreate(true)}>
-                <Plus className="h-4 w-4" /> New gallery
-              </Button>
-            </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-24 text-muted-foreground">
-                <Loader2 className="h-5 w-5 animate-spin" />
-              </div>
-            ) : galleries.length === 0 ? (
-              <EmptyState onCreate={() => setShowCreate(true)} />
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {galleries.map((g) => (
-                  <GalleryCard key={g.id} gallery={g} onOpen={() => setSelected(g)} />
-                ))}
-              </div>
-            )}
-          </>
+              {loading ? (
+                <div className="flex items-center justify-center py-24 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
+              ) : galleries.length === 0 ? (
+                <EmptyState onCreate={() => setShowCreate(true)} />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {galleries.map((g) => (
+                    <GalleryCard key={g.id} gallery={g} onOpen={() => setSelected(g)} />
+                  ))}
+                </div>
+              )}
+            </>
+          )
+        ) : (
+          <MessagesView
+            messages={messages}
+            loading={loading}
+            onChange={loadMessages}
+          />
         )}
       </main>
 
@@ -148,11 +205,44 @@ export function Dashboard({
           onCreated={(g) => {
             setShowCreate(false);
             setSelected(g);
-            load();
+            loadGalleries();
           }}
         />
       )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  icon,
+  label,
+  badge,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative -mb-px flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+        active
+          ? "border-accent text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {icon}
+      {label}
+      {badge !== undefined && badge > 0 && (
+        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[10px] font-semibold text-accent-foreground">
+          {badge}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -637,6 +727,214 @@ function GalleryDetail({
       )}
     </div>
   );
+}
+
+function MessagesView({
+  messages,
+  loading,
+  onChange,
+}: {
+  messages: Message[];
+  loading: boolean;
+  onChange: () => void;
+}) {
+  const { toast } = useToast();
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const toggleRead = async (m: Message) => {
+    const next = !m.read;
+    // optimistic
+    setMessages((prev) =>
+      prev.map((x) => (x.id === m.id ? { ...x, read: next } : x))
+    );
+    try {
+      const res = await fetch(`/api/messages/${m.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ read: next }),
+      });
+      if (!res.ok) throw new Error();
+      onChange();
+    } catch {
+      toast({ title: "Could not update", variant: "destructive" });
+      setMessages((prev) =>
+        prev.map((x) => (x.id === m.id ? { ...x, read: !next } : x))
+      );
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Delete this message? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/messages/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setOpenId(null);
+      onChange();
+      toast({ title: "Message deleted" });
+    } catch {
+      toast({ title: "Could not delete", variant: "destructive" });
+    }
+  };
+
+  const unread = messages.filter((m) => !m.read).length;
+
+  return (
+    <>
+      <div className="mb-8 flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Messages</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enquiries submitted through the contact form.
+            {unread > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
+                {unread} unread
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+      ) : messages.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-foreground/15 py-20 text-center">
+          <Inbox className="h-10 w-10 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-medium">No messages yet</h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            When clients submit the contact form on your site, their enquiries
+            will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-foreground/10">
+          {messages.map((m, i) => (
+            <div key={m.id}>
+              <button
+                onClick={() => {
+                  setOpenId(openId === m.id ? null : m.id);
+                  // mark as read when opened
+                  if (!m.read) toggleRead(m);
+                }}
+                className={`flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-foreground/[0.02] ${
+                  i > 0 ? "border-t border-foreground/10" : ""
+                } ${!m.read ? "bg-accent/[0.04]" : ""}`}
+              >
+                <span
+                  className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold ${
+                    !m.read
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-foreground/10 text-muted-foreground"
+                  }`}
+                >
+                  {m.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`truncate ${!m.read ? "font-semibold" : "font-medium"}`}>
+                      {m.name}
+                    </span>
+                    {!m.read && (
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />
+                    )}
+                    {m.service && (
+                      <span className="hidden shrink-0 rounded-full border border-foreground/10 px-2 py-0.5 text-[10px] text-muted-foreground sm:inline">
+                        {m.service}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                    {m.message}
+                  </p>
+                </div>
+                <span className="hidden shrink-0 text-xs text-muted-foreground sm:block">
+                  {formatDate(m.createdAt)}
+                </span>
+              </button>
+
+              {/* expanded detail */}
+              {openId === m.id && (
+                <div className="border-t border-foreground/10 bg-foreground/[0.02] px-5 py-5">
+                  <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                    <span className="inline-flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" /> {m.name}
+                    </span>
+                    <a
+                      href={`mailto:${m.email}`}
+                      className="inline-flex items-center gap-1.5 text-accent hover:underline"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> {m.email}
+                    </a>
+                    {m.phone && (
+                      <a
+                        href={`tel:${m.phone}`}
+                        className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                      >
+                        <Phone className="h-3.5 w-3.5" /> {m.phone}
+                      </a>
+                    )}
+                    {m.service && (
+                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        <Tag className="h-3.5 w-3.5" /> {m.service}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />{" "}
+                      {new Date(m.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="rounded-lg border border-foreground/10 bg-background p-4 text-sm leading-relaxed">
+                    {m.message}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <a href={`mailto:${m.email}?subject=Re: Your enquiry to PHOTOWALA BAYAD`}>
+                      <Button size="sm">
+                        <Mail className="h-4 w-4" /> Reply by email
+                      </Button>
+                    </a>
+                    {m.phone && (
+                      <a href={`https://wa.me/${m.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="outline">
+                          <Phone className="h-4 w-4" /> WhatsApp
+                        </Button>
+                      </a>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleRead(m)}
+                    >
+                      <MailOpen className="h-4 w-4" />
+                      {m.read ? "Mark unread" : "Mark read"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => remove(m.id)}
+                    >
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffH = diffMs / 36e5;
+  if (diffH < 1) return "just now";
+  if (diffH < 24) return `${Math.floor(diffH)}h ago`;
+  if (diffH < 48) return "yesterday";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function Field({
