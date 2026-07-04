@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         error: msg.includes("database")
           ? NOT_CONFIGURED.error
           : "Something went wrong. Please try again.",
+        debug: msg,
       },
       { status: 500 }
     );
