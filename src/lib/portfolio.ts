@@ -116,6 +116,15 @@ export const portfolio: PortfolioPhoto[] = [
     year: "2025",
     span: "wide",
   },
+  {
+    id: "p12",
+    title: "Garden Stroll",
+    category: "Weddings",
+    image: "/gallery/photo-12.jpg",
+    location: "Bayad, Gujarat",
+    year: "2025",
+    span: "tall",
+  },
 ];
 
 export interface Service {
