@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import ZAI from "z-ai-web-dev-sdk";
 import { db, isDatabaseConfigured } from "@/lib/db";
 
@@ -48,26 +45,32 @@ CONVERSATION GUIDELINES:
 - If the user seems interested in booking, encourage them to use the contact form or call.`;
 
 /**
- * Ensures the z-ai config file exists. On Vercel, the /etc/.z-ai-config file
- * isn't available, so we write one to the home directory from env vars.
+ * Creates a ZAI SDK instance. On Vercel, the /etc/.z-ai-config file isn't
+ * available, so we construct the SDK directly from env vars (bypassing the
+ * file-based loadConfig). Locally, the file is used automatically.
  */
-async function ensureConfig(): Promise<void> {
-  const configPath = join(homedir(), ".z-ai-config");
-  try {
-    // If env vars are set, write the config file
-    if (process.env.ZAI_BASEURL && process.env.ZAI_APIKEY) {
-      const config = {
-        baseUrl: process.env.ZAI_BASEURL,
-        apiKey: process.env.ZAI_APIKEY,
-        chatId: process.env.ZAI_CHATID || "",
-        token: process.env.ZAI_TOKEN || "",
-        userId: process.env.ZAI_USERID || "",
-      };
-      await writeFile(configPath, JSON.stringify(config), "utf-8");
-    }
-  } catch (err) {
-    console.error("[chat] could not write config", err);
+function createZAI(): ZAI {
+  if (process.env.ZAI_BASEURL && process.env.ZAI_APIKEY) {
+    // Production: construct directly from env vars
+    return new ZAI({
+      baseUrl: process.env.ZAI_BASEURL,
+      apiKey: process.env.ZAI_APIKEY,
+      chatId: process.env.ZAI_CHATID || "",
+      token: process.env.ZAI_TOKEN || "",
+      userId: process.env.ZAI_USERID || "",
+    } as ConstructorParameters<typeof ZAI>[0]);
   }
+  // Local dev: ZAI.create() reads from /etc/.z-ai-config
+  // This is async, so we return a promise-based wrapper
+  throw new Error("ZAI env vars not configured");
+}
+
+async function getZAI(): Promise<ZAI> {
+  if (process.env.ZAI_BASEURL && process.env.ZAI_APIKEY) {
+    return createZAI();
+  }
+  // Local dev fallback
+  return ZAI.create();
 }
 
 interface ChatMessage {
@@ -95,9 +98,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure z-ai config is available (writes from env vars on Vercel)
-    await ensureConfig();
-
     // Check if the user is asking about their gallery/photos
     const galleryContext = await lookupGalleryContext(lastUserMessage.content);
 
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       })),
     ];
 
-    const zai = await ZAI.create();
+    const zai = await getZAI();
     const completion = await zai.chat.completions.create({
       messages: sdkMessages,
       thinking: { type: "disabled" },
