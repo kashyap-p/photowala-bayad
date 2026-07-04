@@ -29,3 +29,38 @@ model PortfolioItem {
   featured  Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+}
+
+model Gallery {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  title       String
+  clientName  String
+  clientEmail String
+  note        String?
+  password    String?
+  expiresAt   DateTime?
+  archived    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  photos      GalleryPhoto[]
+}
+
+model GalleryPhoto {
+  id        String   @id @default(cuid())
+  galleryId String
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([galleryId])
+}

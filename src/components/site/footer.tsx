@@ -51,6 +51,7 @@ export function Footer() {
                 ["About", "#about"],
                 ["Voices", "#voices"],
                 ["Contact", "#contact"],
+                ["Studio Login", "/admin/login"],
               ].map(([l, h]) => (
                 <li key={h}>
                   <a
