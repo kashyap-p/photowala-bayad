@@ -555,23 +555,44 @@ function GalleryDetail({
     if (!files || files.length === 0) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      Array.from(files).forEach((f) => formData.append("files", f));
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error);
-      if (data.urls.length === 0) {
-        throw new Error("No files were uploaded.");
+      const fileArray = Array.from(files);
+      const urls: string[] = [];
+      const errors: string[] = [];
+
+      for (const file of fileArray) {
+        // validate type
+        if (!file.type.startsWith("image/")) {
+          errors.push(`${file.name}: not an image`);
+          continue;
+        }
+        // validate size (max 4MB to stay within serverless body limits when
+        // sending the data URL to the photos API)
+        if (file.size > 4 * 1024 * 1024) {
+          errors.push(`${file.name}: too large (max 4MB)`);
+          continue;
+        }
+
+        // Convert to base64 data URL in the browser — no server upload needed.
+        // This works on Vercel's read-only serverless filesystem.
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+          reader.readAsDataURL(file);
+        });
+        urls.push(dataUrl);
       }
-      // add the uploaded URLs to the gallery
-      await addFromPortfolio(data.urls);
-      if (data.errors?.length) {
+
+      if (urls.length === 0) {
+        throw new Error(errors.length > 0 ? errors[0] : "No valid files to upload.");
+      }
+
+      // add the data URLs to the gallery via the photos API
+      await addFromPortfolio(urls);
+      if (errors.length > 0) {
         toast({
           title: "Some files skipped",
-          description: data.errors.join(", "),
+          description: errors.join(", "),
           variant: "destructive",
         });
       }
@@ -703,7 +724,7 @@ function GalleryDetail({
               {uploading ? "Uploading…" : "Upload from device"}
             </span>
             <span className="text-xs text-muted-foreground">
-              Click to choose photos — JPG, PNG, WebP (max 10MB each)
+              Click to choose photos — JPG, PNG, WebP (max 4MB each)
             </span>
           </label>
         </div>
