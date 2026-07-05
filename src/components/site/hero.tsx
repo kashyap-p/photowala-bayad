@@ -153,7 +153,7 @@ export function Hero() {
             transition={{ delay: 0.4, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="relative mx-auto max-w-sm text-foreground lg:max-w-md"
           >
-            <div className="absolute -left-6 -top-6 hidden font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground sm:block">
+            <div className="absolute -left-6 -top-6 hidden font-mono-label text-[10px] uppercase tracking-[0.3em] text-accent sm:block">
               [ 01 ] — Interactive
             </div>
             <Aperture />
