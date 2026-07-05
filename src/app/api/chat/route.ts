@@ -181,6 +181,7 @@ async function lookupGalleryByEmail(email: string): Promise<string | null> {
         clientName: true,
         clientEmail: true,
         password: true,
+        expiresAt: true,
       },
       take: 200,
     });
@@ -228,6 +229,7 @@ async function lookupGalleryByName(userMessage: string): Promise<string | null> 
         title: true,
         clientName: true,
         password: true,
+        expiresAt: true,
       },
       take: 200,
     });
@@ -262,9 +264,30 @@ function formatGalleryLink(
     title: string;
     clientName: string;
     password: string | null;
+    expiresAt: Date | null;
   },
   verifiedBy: "email" | "name"
 ): string {
+  // Check if the gallery has expired
+  if (g.expiresAt && new Date(g.expiresAt) < new Date()) {
+    const expiredDate = new Date(g.expiresAt).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const verifiedText =
+      verifiedBy === "email"
+        ? "✅ Email verified!"
+        : "I found a gallery matching your name:";
+    return `${verifiedText} However, your gallery "${g.title}" expired on ${expiredDate}.
+
+Please contact the studio to have access restored:
+📞 +91 63532 27978
+📧 photowalamodellingstudio@gmail.com
+
+The studio can extend the expiry and resend your link right away.`;
+  }
+
   const link = `https://photowala-bayad.vercel.app/g/${g.slug}`;
   const verifiedText =
     verifiedBy === "email"
