@@ -181,7 +181,6 @@ async function lookupGalleryByEmail(email: string): Promise<string | null> {
         clientName: true,
         clientEmail: true,
         password: true,
-        archived: true,
       },
       take: 200,
     });
@@ -191,7 +190,6 @@ async function lookupGalleryByEmail(email: string): Promise<string | null> {
 
     // 1. Exact email match (case-insensitive)
     for (const g of galleries) {
-      if (g.archived) continue;
       const storedEmail = (g.clientEmail || "").trim().toLowerCase();
       if (storedEmail && storedEmail === normalizedEmail) {
         return formatGalleryLink(g, "email");
@@ -203,7 +201,6 @@ async function lookupGalleryByEmail(email: string): Promise<string | null> {
     const localPart = normalizedEmail.split("@")[0];
     if (localPart && localPart.length >= 3) {
       for (const g of galleries) {
-        if (g.archived) continue;
         const storedLocal = (g.clientEmail || "").split("@")[0].trim().toLowerCase();
         if (storedLocal && storedLocal === localPart) {
           return formatGalleryLink(g, "email");
@@ -231,14 +228,12 @@ async function lookupGalleryByName(userMessage: string): Promise<string | null> 
         title: true,
         clientName: true,
         password: true,
-        archived: true,
       },
       take: 200,
     });
 
     const msgLower = userMessage.toLowerCase();
     for (const g of galleries) {
-      if (g.archived) continue;
       const nameParts = g.clientName.toLowerCase().split(/\s+/);
       const firstName = nameParts[0];
       // Match if the first name (3+ chars) appears in the message
